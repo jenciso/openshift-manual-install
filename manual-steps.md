@@ -360,7 +360,7 @@ for filepath in examples/xpaas-templates/*; do oc create -n openshift -f $filepa
 
 ##### 3.1 Create a client configuration for connecting to OpenShift
 
-**NOTE**: Run on the Master (3.1 ~)
+**NOTE**: Run on the Master (3.1 ~ 3.2)
 
 ~~~
 # oadm create-api-client-config \
@@ -435,7 +435,9 @@ cp: overwrite ‘/etc/openshift/master/ca.crt’? y
 ~~~
 
 
-##### 3.3. iptables setup for node (Run on Master and Node)
+##### 3.3. iptables setup for node
+
+**NOTE**: Run on Master and Node (3.3)
 
 - 1. Disable firewalld
 
@@ -472,6 +474,8 @@ cp: overwrite ‘/etc/openshift/master/ca.crt’? y
 
 ##### 3.4. Create and setup node config
 
+**NOTE**: Run on Master and Node (3.4 ~ 3.5)
+
 - 1. Create node config
 
 ~~~
@@ -499,7 +503,7 @@ cp: overwrite ‘/etc/openshift/master/ca.crt’? y
   --certificate-authority=/etc/openshift/node/ca.crt
 ~~~
 
-- 2. Modify in /etc/sysconfig/openshift-master
+- 2. Modify in /etc/sysconfig/openshift-node
 
 ~~~
 # sed -i -e "s/CONFIG_FILE=\/etc\/openshift\/node\/node.yaml/CONFIG_FILE=\/etc\/openshift\/node\/node-config.yaml/" /etc/sysconfig/openshift-node
@@ -517,7 +521,7 @@ cp: overwrite ‘/etc/openshift/master/ca.crt’? y
 4. A final touch
 ---
 
-(Run on master host)
+**NOTE**: Run on Master
 
 ##### 4.1 Labeled Master node
 
