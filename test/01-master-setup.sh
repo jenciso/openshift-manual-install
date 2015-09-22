@@ -1,18 +1,9 @@
 #!/bin/bash
 
-# Prerequires
-yum -y install docker
-sed -i -e "s/OPTIONS='--selinux-enabled'/OPTIONS='--insecure-registry=172.30.0.0\/16 --selinux-enabled'/" /etc/sysconfig/docker
-systemctl restart docker
-
-
-# Master setup
-yum -y install openshift-master
-
-
 # FIrewall setup
 
 sed -i -e '/^\:OUTPUT ACCEPT/a\:OS_FIREWALL_ALLOW \- \[0\:0\]'   /etc/sysconfig/iptables
+sed -i -e '/^\-A INPUT -j REJECT --reject-with icmp-host-prohibited$/i -A INPUT -j OS_FIREWALL_ALLOW'   /etc/sysconfig/iptables
 sed -i -e '/^COMMIT$/i -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 4001 -j ACCEPT'   /etc/sysconfig/iptables
 sed -i -e '/^COMMIT$/i -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 8443 -j ACCEPT'   /etc/sysconfig/iptables
 sed -i -e '/^COMMIT$/i -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 53 -j ACCEPT'   /etc/sysconfig/iptables

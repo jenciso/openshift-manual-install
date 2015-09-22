@@ -4,21 +4,26 @@ Manual installation example
 0. Preequires
 --------------
 
-Please follow "Host Preparation"
+##### 0.1 Please follow "Host Preparation"
+
 - https://docs.openshift.com/enterprise/3.0/admin_guide/install/prerequisites.html#host-preparation
 
+##### 0.2 Install packages
+
+(Run on master)
+~~~
+yum -y install openshift-master openshift-node
+~~~
+
+(Run on Node host)
+~~~
+# yum -y install openshift-node
+~~~
 
 1. Setup OpenShift Master
 --------------
 
-##### 1.1 Install all the required packages for openshift-master:
-
-~~~
-yum -y install openshift-master
-~~~
-
-
-##### 1.2 Manually Configuring an iptables Firewall
+##### 1.1 Manually Configuring an iptables Firewall
 
 - 1. Disable firewalld
 
@@ -30,6 +35,7 @@ yum -y install openshift-master
 
 ~~~
 # sed -i -e '/^\:OUTPUT ACCEPT/a\:OS_FIREWALL_ALLOW \- \[0\:0\]'   /etc/sysconfig/iptables
+# sed -i -e '/^\-A INPUT -j REJECT --reject-with icmp-host-prohibited$/i -A INPUT -j OS_FIREWALL_ALLOW'   /etc/sysconfig/iptables
 # sed -i -e '/^COMMIT$/i -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 4001 -j ACCEPT\'   /etc/sysconfig/iptables
 # sed -i -e '/^COMMIT$/i -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 8443 -j ACCEPT\'   /etc/sysconfig/iptables
 # sed -i -e '/^COMMIT$/i -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 53 -j ACCEPT\'   /etc/sysconfig/iptables
@@ -50,7 +56,7 @@ yum -y install openshift-master
 ~~~
 
 
-##### 1.3 Create a key and server
+##### 1.2 Create a key and server
 
 - 1. Create keys and certificates for an OpenShift master
 
@@ -70,7 +76,7 @@ yum -y install openshift-master
   eg. https://access.redhat.com/solutions/1605473
 
 
-##### 1.4. Create OpenShift Master configuration files to start
+##### 1.3 Create OpenShift Master configuration files to start
 
 - 1. Create bootstrap-policy file
 
@@ -270,7 +276,7 @@ EOF
 ~~~
 
 
-##### 1.5 openshift-master start and enable
+##### 1.4 openshift-master start and enable
 
 ~~~
 # systemctl start openshift-master
@@ -346,17 +352,6 @@ for filepath in examples/xpaas-templates/*; do oc create -n openshift -f $filepa
 3. Node setup
 ---
 
-##### 3.0 Install packages
-
-(Run on Master host)
-~~~
-# yum -y install openshift-node
-~~~
-
-(Run on Node host)
-~~~
-# yum -y install openshift-node
-~~~
 
 ##### 3.1 Create a client configuration for connecting to OpenShift
 
@@ -449,7 +444,7 @@ cp: overwrite ‘/etc/openshift/master/ca.crt’? y
 
 (For Master host)
 ~~~
-(Run for Node and Master)
+(Run on Master)
 # sed -i -e '/^COMMIT$/i -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 10250 -j ACCEPT\'   /etc/sysconfig/iptables
 # sed -i -e '/^COMMIT$/i -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT\'   /etc/sysconfig/iptables
 # sed -i -e '/^COMMIT$/i -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 443 -j ACCEPT\'   /etc/sysconfig/iptables
@@ -457,9 +452,10 @@ cp: overwrite ‘/etc/openshift/master/ca.crt’? y
 # sed -i -e '/^COMMIT$/i -A OS_FIREWALL_ALLOW -p udp -m state --state NEW -m udp --dport 10255 -j ACCEPT\'   /etc/sysconfig/iptables
 ~~~
 
-(For Node host)
+(Run on host)
 ~~~
 # sed -i -e '/^\:OUTPUT ACCEPT/a\:OS_FIREWALL_ALLOW \- \[0\:0\]'   /etc/sysconfig/iptables
+# sed -i -e '/^\-A INPUT -j REJECT --reject-with icmp-host-prohibited$/i -A INPUT -j OS_FIREWALL_ALLOW'   /etc/sysconfig/iptables
 # sed -i -e '/^COMMIT$/i -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 10250 -j ACCEPT\'   /etc/sysconfig/iptables
 # sed -i -e '/^COMMIT$/i -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 80 -j ACCEPT\'   /etc/sysconfig/iptables
 # sed -i -e '/^COMMIT$/i -A OS_FIREWALL_ALLOW -p tcp -m state --state NEW -m tcp --dport 443 -j ACCEPT\'   /etc/sysconfig/iptables
@@ -483,24 +479,33 @@ cp: overwrite ‘/etc/openshift/master/ca.crt’? y
   --node-dir=/etc/openshift/node/ \
   --node=ose3-master.example.com \
   --hostnames=ose3-master.example.com,192.168.133.2 \
+  --master=https://ose3-master.example.com:8443 \
   --node-client-certificate-authority=/etc/openshift/master/ca.crt \
   --signer-cert=/etc/openshift/master/ca.crt \
   --signer-key=/etc/openshift/master/ca.key \
   --signer-serial=/etc/openshift/master/ca.serial.txt \
-  --certificate-authority=/etc/openshift/master/ca.crt
+  --certificate-authority=/etc/openshift/master/ca.crt \
+  --volume-dir=/var/lib/openshift/openshift.local.volumes
 ~~~
 
 
 ~~~
 # oadm create-node-config \
-  --node-dir=/etc/openshift/node/ \
+  --node-dir=/tmp/node-config \
   --node=ose3-node1.example.com \
   --hostnames=ose3-node1.example.com,192.168.133.3 \
-  --node-client-certificate-authority=/etc/openshift/node/ca.crt \
-  --signer-cert=/etc/openshift/node/ca.crt \
-  --signer-key=/etc/openshift/node/ca.key \
-  --signer-serial=/etc/openshift/node/ca.serial.txt
-  --certificate-authority=/etc/openshift/node/ca.crt
+  --master=https://ose3-master.example.com:8443 \
+  --master=https://ose3-master.example.com:8443 \
+  --node-client-certificate-authority=/etc/openshift/master/ca.crt \
+  --signer-cert=/etc/openshift/master/ca.crt \
+  --signer-key=/etc/openshift/master/ca.key \
+  --signer-serial=/etc/openshift/master/ca.serial.txt \
+  --certificate-authority=/etc/openshift/master/ca.crt \
+  --volume-dir=/var/lib/openshift/openshift.local.volumes
+~~~
+
+~~~
+# rsync -av -e ssh /tmp/node-config/*  root@ose3-node1.example.com:/etc/openshift/node/
 ~~~
 
 - 2. Modify in /etc/sysconfig/openshift-node

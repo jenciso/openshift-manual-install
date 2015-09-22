@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# install packages
-
-yum -y install openshift-node
-
-
 # Create a client configuration for connecting to OpenShift
 # for master
 
@@ -74,22 +69,28 @@ sed -i -e '/^COMMIT$/i -A OS_FIREWALL_ALLOW -p udp -m state --state NEW -m udp -
 oadm create-node-config \
   --node-dir=/etc/openshift/node/ \
   --node=ose3-master.example.com \
+  --master=https://ose3-master.example.com:8443 \
   --hostnames=ose3-master.example.com,192.168.133.2 \
   --node-client-certificate-authority=/etc/openshift/master/ca.crt \
   --signer-cert=/etc/openshift/master/ca.crt \
   --signer-key=/etc/openshift/master/ca.key \
   --signer-serial=/etc/openshift/master/ca.serial.txt \
-  --certificate-authority=/etc/openshift/master/ca.crt
+  --certificate-authority=/etc/openshift/master/ca.crt \
+  --volume-dir=/var/lib/openshift/openshift.local.volumes
 
 oadm create-node-config \
-  --node-dir=/etc/openshift/node/ \
+  --node-dir=/tmp/node-config \
   --node=ose3-node1.example.com \
   --hostnames=ose3-node1.example.com,192.168.133.3 \
-  --node-client-certificate-authority=/etc/openshift/node/ca.crt \
-  --signer-cert=/etc/openshift/node/ca.crt \
-  --signer-key=/etc/openshift/node/ca.key \
-  --signer-serial=/etc/openshift/node/ca.serial.txt
-  --certificate-authority=/etc/openshift/node/ca.crt
+  --master=https://ose3-master.example.com:8443 \
+  --node-client-certificate-authority=/etc/openshift/master/ca.crt \
+  --signer-cert=/etc/openshift/master/ca.crt \
+  --signer-key=/etc/openshift/master/ca.key \
+  --signer-serial=/etc/openshift/master/ca.serial.txt \
+  --certificate-authority=/etc/openshift/master/ca.crt \
+  --volume-dir=/var/lib/openshift/openshift.local.volumes
+
+rsync -av -e ssh /tmp/node-config/*  root@ose3-node1.example.com:/etc/openshift/node/
 
 
 # Modify in /etc/sysconfig/openshift-master
