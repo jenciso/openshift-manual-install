@@ -346,8 +346,7 @@ for filepath in examples/xpaas-templates/*; do oc create -n openshift -f $filepa
 3. Node setup
 ---
 
-3.0 Install packages
----
+##### 3.0 Install packages
 
 (Run on Master host)
 ~~~
@@ -445,9 +444,6 @@ cp: overwrite ‘/etc/openshift/master/ca.crt’? y
 ~~~
 
 - 2. Create iptables
-
-On node
----
 
 (For Master host)
 ~~~
