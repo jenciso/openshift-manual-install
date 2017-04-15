@@ -1,7 +1,7 @@
 Manual installation example
 ===
 
-0. Preequires
+1.Prerequisites
 --------------
 
 ##### 0.1 Please follow "Host Preparation"
